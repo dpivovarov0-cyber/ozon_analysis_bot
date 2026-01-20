@@ -1,17 +1,54 @@
+import os
+import logging
+import requests
+from dotenv import load_dotenv
 from typing import Optional
-from telegram import Bot
-from src.config import TG_BOT_TOKEN, TG_CHAT_ID
 
-_bot = Bot(token=TG_BOT_TOKEN)
 
-def send_message(text: str, parse_mode: Optional[str] = None):
-    _bot.send_message(
-        chat_id=TG_CHAT_ID,
-        text=text,
-        parse_mode=parse_mode
-    )
+log = logging.getLogger("tg_sender")
 
-def send_photo(photo_path: str, caption: str = ""):
-    bot = Bot(token=TG_BOT_TOKEN)
+API = "https://api.telegram.org"
+
+
+def _load_env():
+    # грузим .env гарантированно при каждом вызове
+    load_dotenv()
+
+
+def _get_creds():
+    _load_env()
+    token = os.getenv("TG_BOT_TOKEN")
+    chat_id = os.getenv("TG_CHAT_ID")
+    if not token or not chat_id:
+        raise RuntimeError("Нет TG_BOT_TOKEN или TG_CHAT_ID в .env")
+    return token, chat_id
+
+
+def send_message(text: str, parse_mode: str = "Markdown"):
+    token, chat_id = _get_creds()
+    url = f"{API}/bot{token}/sendMessage"
+    data = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode,
+    }
+    r = requests.post(url, data=data, timeout=30)
+    if r.status_code != 200:
+        raise RuntimeError(f"Telegram sendMessage error {r.status_code}: {r.text[:400]}")
+    return r.json()
+
+
+def send_photo(photo_path: str, caption: Optional[str] = None, parse_mode: str = "Markdown"):
+    token, chat_id = _get_creds()
+    url = f"{API}/bot{token}/sendPhoto"
     with open(photo_path, "rb") as f:
-        bot.send_photo(chat_id=TG_CHAT_ID, photo=f, caption=caption)
+        files = {"photo": f}
+        data = {"chat_id": chat_id}
+        if caption:
+            data["caption"] = caption
+            data["parse_mode"] = parse_mode
+        r = requests.post(url, data=data, files=files, timeout=60)
+    if r.status_code != 200:
+        raise RuntimeError(f"Telegram sendPhoto error {r.status_code}: {r.text[:400]}")
+    return r.json()
+
