@@ -1,41 +1,22 @@
-# virtual env
-venv/
-.venv/
-
-# python
-__pycache__/
-*.pyc
-
-# runtime
-logs/
-out/
-data/
-
-# secrets
-.env
-.env.*
-
-# mac
-.DS_Store
 # venv / python
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# env secrets
+# env / secrets
 .env
+*.env
+credentials*.json
+*.pem
+*.key
+
+# logs / runtime
+logs/
+*.log
+state.json
 
 # mac
 .DS_Store
-
-# runtime artifacts
-logs/
-out/
-data/*.db
-data/*.db-shm
-data/*.db-wal
-data/*.csv
-
-# IDE
-.idea/
-.vscode/
